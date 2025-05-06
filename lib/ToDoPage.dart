@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
+import 'BlankPage.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 import 'SearchBox.dart';
 
-import 'BlankPage.dart';
-
 class ToDoPage extends StatefulWidget {
-  String headline;
-  String bodytext;
+  final List<Map<String, String>> notes;
 
-  // Constructor to accept the data
-  ToDoPage({Key? key, this.headline = '', this.bodytext = ''})
-    : super(key: key);
+  ToDoPage({
+    Key? key,
+    this.notes = const [],
+  }) : super(key: key);
 
   @override
   State<ToDoPage> createState() => _ToDoAppState();
@@ -19,18 +19,10 @@ class ToDoPage extends StatefulWidget {
 class _ToDoAppState extends State<ToDoPage> {
   get searchController => null;
 
-  //List<Map<String, String>> items = [];
-
-
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
     final TextEditingController searchController = TextEditingController();
-
-    final List<String> items = [
-      ...widget.headline.split('\n'),
-      ...widget.bodytext.split('\n'),
-    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -43,9 +35,13 @@ class _ToDoAppState extends State<ToDoPage> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Main Column with SearchBox and ListView
+
+
+
             Column(
               children: [
+
+
                 // Search Box
                 SearchBox(
                   controller: searchController,
@@ -54,30 +50,83 @@ class _ToDoAppState extends State<ToDoPage> {
                   },
                 ),
 
-                // Scrollable list
                 Expanded(
                   child: ListView.builder(
                     padding: EdgeInsets.only(
-                      bottom:
-                          screenSize.width * 0.19 +
-                          16, // Leave space for bottom bar
+
+                      left: 16,
+                      right: 16,
+
+                      bottom: screenSize.width * 0.19 + 16,
                     ),
-                    itemCount: items.length,
+                    itemCount: widget.notes.length,
                     itemBuilder: (context, index) {
-                      return ListTile(
-                        title: Text(
-                          items[index],
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                      final note = widget.notes[index];
+                      return Slidable(
+                        endActionPane: ActionPane(
+                          motion: const DrawerMotion(),
+                          children: [
+                            SlidableAction(
+                              onPressed: (context) {
+                                // Share functionality
+                                print('Share note: ${note['headline']}');
+                              },
+                              backgroundColor: Colors.blue.shade300,
+                              icon: Icons.share,
+                            ),
+                            SlidableAction(
+                              onPressed: (context) {
+                                // Archive functionality
+                                print('Archive note at index $index');
+                              },
+                              backgroundColor: Color(0xFF075EEF) ,
+                              icon: Icons.archive,
+                            ),
+                            SlidableAction(
+                              onPressed: (context) {
+                                // Delete functionality
+                                setState(() {
+                                  widget.notes.removeAt(index);
+                                });
+                              },
+                              backgroundColor: Colors.red.shade400,
+                              icon: Icons.delete,
+                            ),
+                          ],
                         ),
-                        subtitle: Text(widget.headline),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (note['headline']?.isNotEmpty ?? false)
+                              Padding(
+                                padding: EdgeInsets.only(left: 16, top: 8),
+                                child: Text(
+                                  note['headline']!,
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            if (note['bodytext']?.isNotEmpty ?? false)
+                              Padding(
+                                padding: EdgeInsets.only(left: 16, bottom: 8),
+                                child: Text(
+                                  note['bodytext']!,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            Divider(height: 1),
+                          ],
+                        ),
                       );
                     },
                   ),
                 ),
               ],
             ),
-
-            // Fixed Bottom Container
             Align(
               alignment: Alignment.bottomCenter,
               child: Container(
@@ -105,7 +154,7 @@ class _ToDoAppState extends State<ToDoPage> {
                           bottom: screenSize.height * 0.03,
                         ),
                         child: Text(
-                          "0 Notes",
+                          "${widget.notes.length} Notes",
                           style: TextStyle(fontSize: 10, color: Colors.black87),
                         ),
                       ),
@@ -119,11 +168,10 @@ class _ToDoAppState extends State<ToDoPage> {
                         ),
                         child: GestureDetector(
                           onTap: () {
-                            print("Note icon pressed");
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => BlankPage(),
+                                builder: (context) => BlankPage(existingNotes: widget.notes),
                               ),
                             );
                           },
